@@ -13,8 +13,6 @@ require (
 	github.com/kataras/golog v0.0.0-20180321173939-03be10146386
 	github.com/liangdas/mqant v1.8.1
 	github.com/pkg/errors v0.8.1
-	github.com/qiniu/api.v7 v7.2.5+incompatible
-	github.com/qiniu/x v7.0.8+incompatible // indirect
-	qiniupkg.com/x v7.0.8+incompatible // indirect
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	wegate v0.0.0-00010101000000-000000000000
 )

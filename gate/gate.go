@@ -7,6 +7,7 @@ import (
 	"github.com/ikuiki/wwdk/datastruct"
 	"github.com/liangdas/mqant/utils/uuid"
 	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 	"weassembly/conf"
 
@@ -119,7 +120,11 @@ func prepareConnect(conf conf.Conf) (w commontest.Work, token string, err error)
 		return
 	}
 	pass := conf.GetWegatePassword() + time.Now().Format(time.RFC822)
-	resp, _ := w.Request("Login/HD_Login", []byte(`{"username":"gate","password":"`+pass+`"}`))
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	resp, _ := w.Request("Login/HD_Login", []byte(`{"username":"gate","password":"`+string(hashedPass)+`"}`))
 	if resp.Ret != common.RetCodeOK {
 		err = errors.Errorf("登录失败: %s", resp.Msg)
 		return
