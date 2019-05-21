@@ -3,6 +3,7 @@ package main
 import (
 	"weassembly/conf"
 	"weassembly/gate"
+	"weassembly/modules/cue"
 	"weassembly/modules/leave"
 )
 
@@ -13,5 +14,5 @@ func main() {
 		panic(err)
 	}
 	gate := gate.MustNewGate(c)
-	gate.Serve(leave.MustNewLeaveModule())
+	gate.Serve(leave.MustNewLeaveModule(), cue.MustNewCueModule())
 }

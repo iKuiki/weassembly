@@ -31,16 +31,21 @@ type leaveModule struct {
 	contactModifyChan chan datastruct.Contact
 }
 
+func (m *leaveModule) GetName() string {
+	return "leave"
+}
+
 // ModifyContact 可以处理联系人发生变更
-func (l *leaveModule) ModifyContact(contact datastruct.Contact) {
-	l.contactModifyChan <- contact
+func (m *leaveModule) ModifyContact(contact datastruct.Contact) {
+	m.contactModifyChan <- contact
 	return
 }
 
 // 运行对应的module
-func (l *leaveModule) Run() {
+func (m *leaveModule) Run() {
+	m.BaseModule.Logger.Info("leave模块开始运行")
 	// 先同步现有chatroom
-	contacts, _ := l.Caller.GetContactList()
+	contacts, _ := m.Caller.GetContactList()
 	for _, contact := range contacts {
 		if contact.IsChatroom() {
 			// 统计群成员NickName列表
@@ -49,11 +54,12 @@ func (l *leaveModule) Run() {
 				nicknames = append(nicknames, member.NickName)
 			}
 			// 将更新的群成员记录
-			l.chatrooms[contact.UserName] = nicknames
+			m.chatrooms[contact.UserName] = nicknames
 		}
 	}
+	m.BaseModule.Logger.Info("leave模块开始服务")
 	for {
-		contact := <-l.contactModifyChan
+		contact := <-m.contactModifyChan
 		if contact.IsChatroom() {
 			// 统计群成员NickName列表
 			var nicknames []string
@@ -61,14 +67,14 @@ func (l *leaveModule) Run() {
 				nicknames = append(nicknames, member.NickName)
 			}
 			// 检查是否已经存在此联系人
-			oNicknames, ok := l.chatrooms[contact.UserName]
+			oNicknames, ok := m.chatrooms[contact.UserName]
 			if ok && len(nicknames) < len(oNicknames) {
 				// 是旧的联系人，并且发现群成员减少,尝试找出这个人
 				leaveMemberList := language.ArrayDiff(oNicknames, nicknames).([]string)
-				l.Caller.SendTextMessage(contact.UserName, "检测到「"+strings.Join(leaveMemberList, ",")+"」疑似退出本群")
+				m.Caller.SendTextMessage(contact.UserName, "检测到「"+strings.Join(leaveMemberList, ",")+"」疑似退出本群")
 			}
 			// 将更新的群成员记录
-			l.chatrooms[contact.UserName] = nicknames
+			m.chatrooms[contact.UserName] = nicknames
 		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/liangdas/mqant/utils/uuid"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
+	"sync"
 	"time"
 	"weassembly/conf"
 
@@ -47,10 +48,11 @@ func NewGate(conf conf.Conf) (g Gate, err error) {
 }
 
 type gate struct {
-	conf    conf.Conf
-	w       commontest.Work // mqtt客户端
-	token   string          // 微信plugin注册后的token
-	modules map[string]Module
+	conf       conf.Conf
+	w          commontest.Work // mqtt客户端
+	token      string          // 微信plugin注册后的token
+	modules    map[string]Module
+	callerLock sync.Mutex
 }
 
 // Serve 运行
@@ -58,6 +60,9 @@ func (g *gate) Serve(modules ...Module) {
 	// 给module分配caller
 	for _, module := range modules {
 		module.SetCaller(g)
+		logger := g.conf.GetLogger().Child("[" + module.GetName() + "]")
+		logger.NewLine = true
+		module.SetLogger(logger)
 		g.modules[uuid.Rand().Hex()] = module
 		// 运行它！
 		go module.Run()
@@ -96,7 +101,7 @@ func (g *gate) Serve(modules ...Module) {
 				go module.ModifyContact(contact)
 			}
 		case message := <-messageChan:
-			g.conf.GetLogger().Info("new message from: ", message.FromUserName)
+			g.conf.GetLogger().Infof("new message[%s]{%v}: %s", message.FromUserName, message.MsgType, message.GetContent())
 			for _, module := range g.modules {
 				go module.ReciveMessage(message)
 			}
