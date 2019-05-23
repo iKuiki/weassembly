@@ -119,6 +119,7 @@ func prepareConnect(conf conf.Conf) (w commontest.Work, token string, err error)
 	opts.SetOnConnectHandler(func(client MQTT.Client) {
 		conf.GetLogger().Info("OnConnectHandler")
 	})
+	opts.SetAutoReconnect(true)
 	err = w.Connect(opts)
 	if err != nil {
 		err = errors.WithStack(err)

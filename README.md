@@ -20,3 +20,6 @@ wegate
   |                  |
   +----+moduleC   +--+
 ```
+
+TODO:
+- 给与每个模块一个储存config的地方
