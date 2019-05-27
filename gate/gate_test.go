@@ -13,15 +13,13 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	w, token, err := prepareConnect(c)
-	if err != nil {
-		panic(err)
-	}
 	g = &gate{
 		conf:    c,
-		w:       w,
-		token:   token,
 		modules: make(map[string]Module),
+	}
+	err = g.prepareConnect(c)
+	if err != nil {
+		panic(err)
 	}
 }
 

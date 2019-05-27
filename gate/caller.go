@@ -23,6 +23,8 @@ type Caller interface {
 func (g *gate) GetContactList() (contacts []datastruct.Contact, err error) {
 	g.callerLock.Lock()
 	defer g.callerLock.Unlock()
+	g.connLock.RLock()
+	defer g.connLock.RUnlock()
 	resp, _ := g.w.Request("Wechat/HD_Wechat_CallWechat", []byte(`{"fnName":"GetContactList","token":"`+g.token+`"}`))
 	if resp.Ret != common.RetCodeOK {
 		err = errors.Errorf("GetContactList失败: %s", resp.Msg)
@@ -36,6 +38,8 @@ func (g *gate) GetContactList() (contacts []datastruct.Contact, err error) {
 func (g *gate) SendTextMessage(toUserName, content string) (sendMessageRespond wechatstruct.SendMessageRespond, err error) {
 	g.callerLock.Lock()
 	defer g.callerLock.Unlock()
+	g.connLock.RLock()
+	defer g.connLock.RUnlock()
 	resp, _ := g.w.Request("Wechat/HD_Wechat_CallWechat", []byte(fmt.Sprintf(
 		`{"fnName":"SendTextMessage","token":"%s","toUserName":"%s","content":"%s"}`,
 		g.token,
