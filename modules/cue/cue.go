@@ -86,7 +86,7 @@ func (m *cueModule) Run() {
 				if strings.Contains(msg.GetContent(), cue) {
 					m.BaseModule.Logger.Infof("检测到cue[%s]: %s", cue, msg.GetContent())
 					// 有cue，向所有星标联系人发送消息
-					err := m.Caller.BroadcaseToStartedContact(fmt.Sprintf("好像有人cue你: 关键字: %s 原文: %s", cue, msg.GetContent()))
+					err := m.Caller.BroadcaseToStartedContact(fmt.Sprintf("好像有人cue你\\n关键字: %s\\n原文: %s", cue, msg.GetContent()))
 					if err != nil {
 						m.BaseModule.Logger.Errorf("broadcaseToStartedContact fail: %+v", err)
 					}
