@@ -3,6 +3,7 @@ package gate
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ikuiki/go-component/language"
 	"github.com/ikuiki/wwdk"
 	"github.com/ikuiki/wwdk/datastruct"
 	"github.com/liangdas/mqant/utils/uuid"
@@ -36,12 +37,24 @@ func MustNewGate(conf conf.Conf) (g Gate) {
 // NewGate 创建新的插件网关服务模块
 func NewGate(conf conf.Conf) (g Gate, err error) {
 	gt := &gate{
-		conf:    conf,
-		modules: make(map[string]Module),
+		conf:       conf,
+		modules:    make(map[string]Module),
+		contactMap: make(map[string]datastruct.Contact),
 	}
 	err = gt.prepareConnect(conf)
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+	// 准备联系人
+	contacts, err := gt.getContactList()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	for _, contact := range contacts {
+		gt.contactMap[contact.UserName] = contact
+		if contact.IsStar() {
+			gt.startedContact = append(gt.startedContact, contact.UserName)
+		}
 	}
 	g = gt
 	return
@@ -54,6 +67,9 @@ type gate struct {
 	modules    map[string]Module
 	callerLock sync.Mutex
 	connLock   sync.RWMutex // 连接是否可用的锁，当连接不可用时会锁起
+	// 以下属性是为了服务Caller用的属性
+	contactMap     map[string]datastruct.Contact // 联系人map
+	startedContact []string                      // 星标联系人
 }
 
 // Serve 运行
@@ -112,11 +128,23 @@ func (g *gate) Serve(modules ...Module) {
 			}
 		case contact := <-contactChan:
 			g.conf.GetLogger().Info("new contact: ", contact.NickName)
+			// 更新本地联系人map
+			g.contactMap[contact.UserName] = contact
+			// 检测是否为星标联系人，并有所处理
+			if contact.IsStar() {
+				// 添加星标联系人
+				g.startedContact = language.ArrayUnique(append(g.startedContact, contact.UserName)).([]string)
+			} else {
+				// 从已有星标联系人中去除此非星标的联系人
+				g.startedContact = language.ArrayDiff(g.startedContact, []string{contact.UserName}).([]string)
+			}
+			// 逐一通知各module
 			for _, module := range g.modules {
 				go module.ModifyContact(contact)
 			}
 		case message := <-messageChan:
-			g.conf.GetLogger().Infof("new message[%s]{%v}: %s", message.FromUserName, message.MsgType, message.GetContent())
+			contact, _ := g.GetContactByUserName(message.FromUserName)
+			g.conf.GetLogger().Infof("new message[%s]{%v}: %s", contact.NickName, message.MsgType, message.GetContent())
 			for _, module := range g.modules {
 				go module.ReciveMessage(message)
 			}

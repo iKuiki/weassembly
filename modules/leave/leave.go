@@ -72,6 +72,7 @@ func (m *leaveModule) Run() {
 				// 是旧的联系人，并且发现群成员减少,尝试找出这个人
 				leaveMemberList := language.ArrayDiff(oNicknames, nicknames).([]string)
 				m.Caller.SendTextMessage(contact.UserName, "检测到「"+strings.Join(leaveMemberList, ",")+"」疑似退出本群")
+				m.Caller.BroadcaseToStartedContact("检测到「" + strings.Join(leaveMemberList, ",") + "」疑似退出「" + contact.NickName + "」")
 			}
 			// 将更新的群成员记录
 			m.chatrooms[contact.UserName] = nicknames

@@ -51,19 +51,9 @@ func (m *monitorModule) Run() {
 	for {
 		select {
 		case pluginDesc := <-m.addPluginChan:
-			contacts, _ := m.Caller.GetContactList()
-			for _, contact := range contacts {
-				if contact.IsStar() {
-					m.Caller.SendTextMessage(contact.UserName, fmt.Sprintf("添加插件[%s]%s", pluginDesc.Name, pluginDesc.Description))
-				}
-			}
+			m.Caller.BroadcaseToStartedContact(fmt.Sprintf("添加插件[%s]%s", pluginDesc.Name, pluginDesc.Description))
 		case pluginDesc := <-m.removePluginChan:
-			contacts, _ := m.Caller.GetContactList()
-			for _, contact := range contacts {
-				if contact.IsStar() {
-					m.Caller.SendTextMessage(contact.UserName, fmt.Sprintf("移除插件[%s]%s", pluginDesc.Name, pluginDesc.Description))
-				}
-			}
+			m.Caller.BroadcaseToStartedContact(fmt.Sprintf("移除插件[%s]%s", pluginDesc.Name, pluginDesc.Description))
 		}
 	}
 }
