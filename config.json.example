@@ -1,4 +1,9 @@
 {
     "WegateURL": "tcp://127.0.0.1:3563",
-    "WegatePassword": ""
+    "WegatePassword": "",
+    "ModuleConfs": {
+        "cue": {
+            "Cues": ""
+        }
+    }
 }

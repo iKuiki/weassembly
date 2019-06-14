@@ -15,12 +15,16 @@ type Conf interface {
 	GetLogger() *golog.Logger
 	GetWegateURL() string
 	GetWegatePassword() string
+	GetModuleConf(moduleName string) (moduleConf ModuleConf, ok bool)
 }
 
 // NewConfig 创建新的配置实例
 func NewConfig() Conf {
 	return new(conf)
 }
+
+// ModuleConf 模块配置
+type ModuleConf map[string]string
 
 // conf 配置文件实现
 type conf struct {
@@ -29,6 +33,7 @@ type conf struct {
 	// WegatePassword wegate微信网关的接入密码
 	WegatePassword string
 	logger         *golog.Logger
+	ModuleConfs    map[string]ModuleConf // ModuleType=>map[string]string
 }
 
 // LoadJSON 从json文件载入配置
@@ -60,4 +65,12 @@ func (c *conf) GetWegateURL() string {
 
 func (c *conf) GetWegatePassword() string {
 	return c.WegatePassword
+}
+
+func (c *conf) GetModuleConf(moduleName string) (moduleConf ModuleConf, ok bool) {
+	moduleConf, ok = c.ModuleConfs[moduleName]
+	if !ok {
+		moduleConf = make(ModuleConf)
+	}
+	return
 }

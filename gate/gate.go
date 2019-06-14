@@ -59,10 +59,10 @@ type gate struct {
 func (g *gate) Serve(modules ...Module) {
 	// 给module分配caller
 	for _, module := range modules {
-		module.SetCaller(g)
 		logger := g.conf.GetLogger().Child("[" + module.GetName() + "]")
 		logger.NewLine = true
-		module.SetLogger(logger)
+		moduleConf, _ := g.conf.GetModuleConf(module.GetName())
+		module.Set(g, logger, moduleConf)
 		g.modules[uuid.Rand().Hex()] = module
 		// 运行它！
 		go module.Run()

@@ -97,6 +97,10 @@ func (m *cueModule) removeCue(cmd string, msg datastruct.Message) {
 // 运行对应的module
 func (m *cueModule) Run() {
 	m.BaseModule.Logger.Info("cue模块开始运行")
+	// 从配置中读取cue词
+	cues := strings.Split(m.ModuleConf["Cues"], ",")
+	m.cues = append(m.cues, cues...)
+	m.BaseModule.Logger.Info("cues: ", m.cues)
 	// 先同步现有chatroom
 	contacts, _ := m.Caller.GetContactList()
 	for _, contact := range contacts {
