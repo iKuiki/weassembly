@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 	"weassembly/conf"
+	"wegate/wechat"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 
@@ -70,6 +71,8 @@ func (g *gate) Serve(modules ...Module) {
 	loginChan := make(chan wwdk.LoginChannelItem)
 	contactChan := make(chan datastruct.Contact)
 	messageChan := make(chan datastruct.Message)
+	addPluginChan := make(chan wechat.PluginDesc)
+	removePluginChan := make(chan wechat.PluginDesc)
 	g.w.On("LoginStatus", func(client MQTT.Client, msg MQTT.Message) {
 		var loginItem wwdk.LoginChannelItem
 		if e := json.Unmarshal(msg.Payload(), &loginItem); e == nil {
@@ -88,6 +91,18 @@ func (g *gate) Serve(modules ...Module) {
 			messageChan <- message
 		}
 	})
+	g.w.On("AddPlugin", func(client MQTT.Client, msg MQTT.Message) {
+		var pluginDesc wechat.PluginDesc
+		if e := json.Unmarshal(msg.Payload(), &pluginDesc); e == nil {
+			addPluginChan <- pluginDesc
+		}
+	})
+	g.w.On("RemovePlugin", func(client MQTT.Client, msg MQTT.Message) {
+		var pluginDesc wechat.PluginDesc
+		if e := json.Unmarshal(msg.Payload(), &pluginDesc); e == nil {
+			removePluginChan <- pluginDesc
+		}
+	})
 	for {
 		select {
 		case loginItem := <-loginChan:
@@ -104,6 +119,16 @@ func (g *gate) Serve(modules ...Module) {
 			g.conf.GetLogger().Infof("new message[%s]{%v}: %s", message.FromUserName, message.MsgType, message.GetContent())
 			for _, module := range g.modules {
 				go module.ReciveMessage(message)
+			}
+		case pluginDesc := <-addPluginChan:
+			g.conf.GetLogger().Infof("new plugin added: [%s]%s", pluginDesc.Name, pluginDesc.Description)
+			for _, module := range g.modules {
+				go module.AddPlugin(pluginDesc)
+			}
+		case pluginDesc := <-removePluginChan:
+			g.conf.GetLogger().Infof("plugin removed: [%s]%s", pluginDesc.Name, pluginDesc.Description)
+			for _, module := range g.modules {
+				go module.RemovePlugin(pluginDesc)
 			}
 		}
 	}
@@ -130,12 +155,14 @@ func (g *gate) prepareConnect(conf conf.Conf) (err error) {
 			panic(errors.Errorf("登录失败: %s", resp.Msg))
 		}
 		resp, _ = g.w.Request("Wechat/HD_Wechat_RegisterMQTTPlugin", []byte(fmt.Sprintf(
-			`{"name":"%s","description":"%s","loginListenerTopic":"%s","contactListenerTopic":"%s","msgListenerTopic":"%s"}`,
+			`{"name":"%s","description":"%s","loginListenerTopic":"%s","contactListenerTopic":"%s","msgListenerTopic":"%s","addPluginListenerTopic":"%s","removePluginListenerTopic":"%s"}`,
 			"weAssembly",
 			"子模块集合",
 			"LoginStatus",
 			"ModifyContact",
 			"NewMessage",
+			"AddPlugin",
+			"RemovePlugin",
 		)))
 		if resp.Ret != common.RetCodeOK {
 			panic(errors.Errorf("注册plugin失败: %s", resp.Msg))

@@ -5,6 +5,7 @@ import (
 	"weassembly/gate"
 	"weassembly/modules/cue"
 	"weassembly/modules/leave"
+	"weassembly/modules/monitor"
 )
 
 func main() {
@@ -14,5 +15,5 @@ func main() {
 		panic(err)
 	}
 	gate := gate.MustNewGate(c)
-	gate.Serve(leave.MustNewLeaveModule(), cue.MustNewCueModule())
+	gate.Serve(leave.MustNewLeaveModule(), cue.MustNewCueModule(), monitor.MustNewMonitorModule())
 }

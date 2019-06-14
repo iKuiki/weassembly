@@ -5,6 +5,7 @@ import (
 	"github.com/ikuiki/wwdk/datastruct"
 	"github.com/kataras/golog"
 	"weassembly/conf"
+	"wegate/wechat"
 )
 
 // Module 模块的定义
@@ -17,6 +18,10 @@ type Module interface {
 	ModifyContact(contact datastruct.Contact)
 	// ReciveMessage 可以处理接受到信息
 	ReciveMessage(msg datastruct.Message)
+	// AddPlugin 可以处理添加插件事件
+	AddPlugin(plugDesc wechat.PluginDesc)
+	// RemovePlugin 可以处理移除插件事件
+	RemovePlugin(plugDesc wechat.PluginDesc)
 	// Set 传入配置
 	Set(configs ...interface{})
 	// 运行对应的module
@@ -44,6 +49,18 @@ func (m *BaseModule) ModifyContact(contact datastruct.Contact) {
 
 // ReciveMessage 可以处理接受到信息
 func (m *BaseModule) ReciveMessage(msg datastruct.Message) {
+	// 不处理
+	return
+}
+
+// AddPlugin 可以处理添加插件事件
+func (m *BaseModule) AddPlugin(plugDesc wechat.PluginDesc) {
+	// 不处理
+	return
+}
+
+// RemovePlugin 可以处理移除插件事件
+func (m *BaseModule) RemovePlugin(plugDesc wechat.PluginDesc) {
 	// 不处理
 	return
 }
