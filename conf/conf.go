@@ -1,11 +1,7 @@
 package conf
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
-	"os"
-	"strings"
+	"github.com/jinzhu/configor"
 
 	"github.com/kataras/golog"
 
@@ -37,28 +33,7 @@ type conf struct {
 
 // LoadJSON 从json文件载入配置
 func (c *conf) LoadJSON(jsonFilepath string) (err error) {
-	var data []byte
-	buf := new(bytes.Buffer)
-	f, err := os.Open(jsonFilepath)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	defer f.Close()
-	r := bufio.NewReader(f)
-	for {
-		line, err := r.ReadSlice('\n')
-		if err != nil {
-			if len(line) > 0 {
-				buf.Write(line)
-			}
-			break
-		}
-		if !strings.HasPrefix(strings.TrimLeft(string(line), "\t "), "//") {
-			buf.Write(line)
-		}
-	}
-	data = buf.Bytes()
-	err = json.Unmarshal(data, c)
+	err = configor.Load(c, jsonFilepath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -66,7 +41,6 @@ func (c *conf) LoadJSON(jsonFilepath string) (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
 	return nil
 }
 
