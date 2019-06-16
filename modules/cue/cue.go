@@ -52,7 +52,7 @@ func (m *cueModule) addCue(cmd string, msg datastruct.Message) {
 		fmt.Sprintf("添加了%d个cue词，当前cue词列表为: %s",
 			len(m.cues)-len(ocues),
 			strings.Join(m.cues, ",")))
-	m.BaseModule.Logger.Infof("updated cues: %v", m.cues)
+	m.Logger.Infof("updated cues: %v", m.cues)
 }
 
 func (m *cueModule) removeCue(cmd string, msg datastruct.Message) {
@@ -66,17 +66,17 @@ func (m *cueModule) removeCue(cmd string, msg datastruct.Message) {
 		fmt.Sprintf("移除了%d个cue词，当前cue词列表为: %s",
 			len(m.cues)-len(ocues),
 			strings.Join(m.cues, ",")))
-	m.BaseModule.Logger.Infof("updated cues: %v", m.cues)
+	m.Logger.Infof("updated cues: %v", m.cues)
 }
 
 // 运行对应的module
 func (m *cueModule) Run() {
-	m.BaseModule.Logger.Info("cue模块开始运行")
+	m.Logger.Info("cue模块开始运行")
 	// 从配置中读取cue词
 	cues := strings.Split(m.ModuleConf["Cues"], ",")
 	m.cues = append(m.cues, cues...)
-	m.BaseModule.Logger.Info("cues: ", m.cues)
-	m.BaseModule.Logger.Info("cue模块开始服务")
+	m.Logger.Info("cues: ", m.cues)
+	m.Logger.Info("cue模块开始服务")
 	for {
 		// 检测群消息是否含有cue
 		msg := <-m.newMsgChan
@@ -84,11 +84,22 @@ func (m *cueModule) Run() {
 			// 如果是群消息，则检测是否有cue关键字
 			for _, cue := range m.cues {
 				if strings.Contains(msg.GetContent(), cue) {
-					m.BaseModule.Logger.Infof("检测到cue[%s]: %s", cue, msg.GetContent())
+					m.Logger.Infof("检测到cue[%s]: %s", cue, msg.GetContent())
+					cueMessage := fmt.Sprintf("好像有人cue你\\n关键字: %s\\n原文: %s", cue, msg.GetContent())
+					if chatroom, err := m.Caller.GetContactByUserName(msg.FromUserName); err == nil {
+						memberUserName, _ := msg.GetMemberUserName()
+						if member, err := chatroom.GetMember(memberUserName); err == nil {
+							cueMessage = fmt.Sprintf("好像有人cue你\\n%s[%s]\\n关键字: %s\\n原文: %s",
+								chatroom.NickName,
+								member.NickName,
+								cue,
+								msg.GetContent())
+						}
+					}
 					// 有cue，向所有星标联系人发送消息
-					err := m.Caller.BroadcaseToStartedContact(fmt.Sprintf("好像有人cue你\\n关键字: %s\\n原文: %s", cue, msg.GetContent()))
+					err := m.Caller.BroadcaseToStartedContact(cueMessage)
 					if err != nil {
-						m.BaseModule.Logger.Errorf("broadcaseToStartedContact fail: %+v", err)
+						m.Logger.Errorf("broadcaseToStartedContact fail: %+v", err)
 					}
 				}
 			}
