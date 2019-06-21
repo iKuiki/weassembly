@@ -46,16 +46,7 @@ func NewGate(conf conf.Conf) (g Gate, err error) {
 		return nil, errors.WithStack(err)
 	}
 	// 准备联系人
-	contacts, err := gt.getContactList()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	for _, contact := range contacts {
-		gt.contactMap[contact.UserName] = contact
-		if contact.IsStar() {
-			gt.startedContact = append(gt.startedContact, contact.UserName)
-		}
-	}
+	gt.prepareContact()
 	g = gt
 	return
 }
@@ -123,6 +114,11 @@ func (g *gate) Serve(modules ...Module) {
 		select {
 		case loginItem := <-loginChan:
 			g.conf.GetLogger().Info("new loginItem: ", loginItem.Code)
+			// 对loginItem预处理
+			switch loginItem.Code {
+			case wwdk.LoginStatusGotBatchContact:
+				g.prepareContact()
+			}
 			for _, module := range g.modules {
 				go module.LoginStatusChange(loginItem)
 			}
@@ -207,6 +203,25 @@ func (g *gate) prepareConnect(conf conf.Conf) (err error) {
 	if err != nil {
 		err = errors.WithStack(err)
 		return
+	}
+	return
+}
+
+// 准备联系人
+func (g *gate) prepareContact() (err error) {
+	// 初始化联系人相关字段
+	g.contactMap = make(map[string]datastruct.Contact)
+	g.startedContact = []string{}
+	// 更新联系人
+	contacts, err := g.getContactList()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	for _, contact := range contacts {
+		g.contactMap[contact.UserName] = contact
+		if contact.IsStar() {
+			g.startedContact = append(g.startedContact, contact.UserName)
+		}
 	}
 	return
 }
