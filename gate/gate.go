@@ -116,7 +116,7 @@ func (g *gate) Serve(modules ...Module) {
 			g.conf.GetLogger().Info("new loginItem: ", loginItem.Code)
 			// 对loginItem预处理
 			switch loginItem.Code {
-			case wwdk.LoginStatusGotBatchContact:
+			case wwdk.LoginStatusBatchGotContact:
 				g.prepareContact()
 			}
 			for _, module := range g.modules {
