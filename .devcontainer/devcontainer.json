@@ -1,5 +1,5 @@
 {
-	"name": "WeCraftManager",
+	"name": "WeAssembly",
 	"dockerFile": "Dockerfile",
 	"extensions": [
 		"ms-vscode.go",
@@ -13,7 +13,6 @@
 		"--security-opt",
 		"seccomp=unconfined"
 	],
-	"postCreateCommand": "go mod download",
 	"settings": {
 		"go.gopath": "/go",
 		"go.inferGopath": true,
